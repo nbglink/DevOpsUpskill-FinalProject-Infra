@@ -58,13 +58,6 @@ pipeline {
                 }
             }
         }
-        stage('Application deploy') {
-            steps {
-                dir("argocd-app-config") {
-                    sh "kubectl apply -f application.yaml"
-                }
-            }
-        }
         stage('Destroy the EKS cluster? if Yes the clster will be destroyed') {
             steps {
                 script {
