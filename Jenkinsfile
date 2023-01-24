@@ -28,6 +28,7 @@ pipeline {
                 script {
                     dir("terraform-eks-infra") {
                         sh "aws eks --region \$(terraform output -raw region) update-kubeconfig --name \$(terraform output -raw cluster_name)"
+                        sh "kubectl create namespace argocd"
                     }
                 }
             }
@@ -35,7 +36,6 @@ pipeline {
         stage("Install ArgoCD") {
             when {
                 expression {
-                    sh "kubectl create namespace argocd"
                     sh('kubectl get deployment argocd-server -n argocd -o jsonpath="{.metadata.labels.app}"') == "argocd-server"
                 }
             }
