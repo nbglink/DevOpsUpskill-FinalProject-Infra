@@ -28,18 +28,13 @@ pipeline {
                 script {
                     dir("terraform-eks-infra") {
                         sh "aws eks --region \$(terraform output -raw region) update-kubeconfig --name \$(terraform output -raw cluster_name)"
-                        sh "kubectl create namespace argocd"
                     }
                 }
             }
         }
         stage("Install ArgoCD") {
-            when {
-                expression {
-                    sh('kubectl get deployment argocd-server -n argocd -o jsonpath="{.metadata.labels.app}"') == "argocd-server"
-                }
-            }
             steps {
+                sh "kubectl create namespace argocd"
                 sh "kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml"
                 sh "kubectl patch svc argocd-server -n argocd -p '{\"spec\": {\"type\": \"LoadBalancer\"}}'"
             }
