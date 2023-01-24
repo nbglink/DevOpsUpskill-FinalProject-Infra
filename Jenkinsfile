@@ -6,7 +6,6 @@ library identifier: 'jenkins-shared-library@main', retriever: modernSCM(
      credentialsId: 'github-credentials'
     ]
 )
-// CI part
 def user_choice = ""
 pipeline {
     agent any
@@ -22,6 +21,20 @@ pipeline {
                     }
                 }
             }
+        }
+        stage('Update GIT to update terraform status files in the repo') {
+          steps {
+            script {
+              catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                withCredentials([usernamePassword(credentialsId: 'github-credentials', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
+                    def encodedPassword = URLEncoder.encode("$GIT_PASSWORD",'UTF-8')
+                    sh "git add terraform-eks-infra/"
+                    sh "git commit -m 'Triggered Build: ${env.BUILD_NUMBER}'"
+                    sh "git push https://${GIT_USERNAME}:${encodedPassword}@github.com/${GIT_USERNAME}/DevOpsUpskill-FinalProject-Infra.git HEAD:main"
+                }
+              }
+            }
+          }
         }
         stage('Update Kubeconfig') {
             steps {
@@ -60,14 +73,13 @@ pipeline {
             steps {
                 echo 'EKS cluster destroyng...'
                 dir("terraform-eks-infra") {
-                        sh ""
                         sh "kubectl delete -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml"
                         sh "kubectl delete namespace argocd"
                         sh "terraform destroy --auto-approve"
                     }
             }
         }
-        stage('Update GIT') {
+        stage('Update GIT to clean the terraform status files in the repo') {
           steps {
             script {
               catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
