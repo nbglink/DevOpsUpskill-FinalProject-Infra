@@ -35,11 +35,11 @@ pipeline {
         stage("Install ArgoCD") {
             when {
                 expression {
+                    sh "kubectl create namespace argocd"
                     sh('kubectl get deployment argocd-server -n argocd -o jsonpath="{.metadata.labels.app}"') == "argocd-server"
                 }
             }
             steps {
-                sh "kubectl create namespace argocd"
                 sh "kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml"
                 sh "kubectl patch svc argocd-server -n argocd -p '{\"spec\": {\"type\": \"LoadBalancer\"}}'"
             }
