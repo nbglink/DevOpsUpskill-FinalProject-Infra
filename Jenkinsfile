@@ -68,7 +68,7 @@ pipeline {
         stage('Destroy the EKS cluster? if Yes the clster will be destroyed') {
             steps {
                 script {
-                    user_choice = input message: 'Are you sure you want to execute this stage?', ok: 'Proceed', parameters: [choice(choices: 'Yes\nNo', description: '', name: 'user_choice')]
+                    user_choice = input message: 'Are you sure you want to execute this stage?', ok: 'Proceed', parameters: [choice(choices: 'No\nYes', description: 'Be careful with this step!!!', name: 'user_choice')]
                 }
             }
         }
