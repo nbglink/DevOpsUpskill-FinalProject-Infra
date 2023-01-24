@@ -58,7 +58,7 @@ pipeline {
                 }
             }
         }
-        stage('deploy') {
+        stage('Application deploy') {
             steps {
                 dir("argocd-app-config") {
                     sh "kubectl apply -f application.yaml"
