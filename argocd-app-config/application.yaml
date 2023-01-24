@@ -7,7 +7,7 @@ spec:
   project: default
 
   source:
-    repoURL: https://github.com/nbglink/DevOpsUpskill-FinalProject.git
+    repoURL: https://github.com/nbglink/DevOpsUpskill-FinalProject-Infra.git
     targetRevision: HEAD
     path: ./argocd-app-config/dev
   destination: 
