@@ -9,10 +9,10 @@ spec:
   source:
     repoURL: https://github.com/nbglink/DevOpsUpskill-FinalProject-Infra.git
     targetRevision: HEAD
-    path: ./argocd-app-config/dev
+    path: ./argocd-app-config/newapp
   destination: 
     server: https://kubernetes.default.svc
-    namespace: drun
+    namespace: newapp
 
   syncPolicy:
     syncOptions:
