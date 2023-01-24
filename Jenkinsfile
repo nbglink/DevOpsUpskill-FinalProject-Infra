@@ -47,9 +47,15 @@ pipeline {
         }
         stage("Install ArgoCD") {
             steps {
-                sh "kubectl create namespace argocd"
-                sh "kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml"
-                sh "kubectl patch svc argocd-server -n argocd -p '{\"spec\": {\"type\": \"LoadBalancer\"}}'"
+                script {
+                    if (!sh("kubectl create namespace argocd")) {
+                        sh "kubectl create namespace argocd"
+                        sh "kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml"
+                        sh "kubectl patch svc argocd-server -n argocd -p '{\"spec\": {\"type\": \"LoadBalancer\"}}'"
+                    } else {
+                        echo "Nothing to do"
+                    }
+                }
             }
         }
         stage('deploy') {
