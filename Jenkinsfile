@@ -65,7 +65,7 @@ pipeline {
                 }
             }
         }
-        stage('Destroying EKS cluster?') {
+        stage('Destroying EKS cluster') {
             when {
                 expression { user_choice == 'Yes' }
             }
@@ -78,7 +78,7 @@ pipeline {
                     }
             }
         }
-        stage('Update GIT to clean the terraform status files in the repo') {
+        stage('Update GIT to clean the terraform status files in the repo after destroy') {
           steps {
             script {
               catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
