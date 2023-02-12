@@ -1,12 +1,5 @@
 #!/usr/bin/env groovy
 
-library identifier: 'jenkins-shared-library@main', retriever: modernSCM(
-    [$class: 'GitSCMSource',
-     remote: 'https://github.com/nbglink/jenkins-shared-library.git',
-     credentialsId: 'github-credentials'
-    ]
-)
-def user_choice = ""
 pipeline {
     agent any
     stages {
@@ -93,40 +86,6 @@ pipeline {
                     slackSend color: 'danger', message: "Install ArgoCD - FAILURE: There was an issue while installing ArgoCD!"
                 }
             }
-        }
-        stage('Destroy the EKS cluster? if Yes the clster will be destroyed') {
-            steps {
-                script {
-                    user_choice = input message: 'Are you sure you want to execute this stage?', ok: 'Proceed', parameters: [choice(choices: 'No\nYes', description: 'Be careful with this step!!!', name: 'user_choice')]
-                }
-            }
-        }
-        stage('Destroying EKS cluster') {
-            when {
-                expression { user_choice == 'Yes' }
-            }
-            steps {
-                echo 'EKS cluster destroyng...'
-                dir("terraform-eks-infra") {
-                        sh "kubectl delete -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml"
-                        sh "kubectl delete namespace argocd"
-                        sh "terraform destroy --auto-approve"
-                    }
-            }
-        }
-        stage('Update GIT to clean the terraform status files in the repo after destroy') {
-          steps {
-            script {
-              catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                withCredentials([usernamePassword(credentialsId: 'github-credentials', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-                    def encodedPassword = URLEncoder.encode("$GIT_PASSWORD",'UTF-8')
-                    sh "git add terraform-eks-infra/"
-                    sh "git commit -m 'Triggered Build: ${env.BUILD_NUMBER}'"
-                    sh "git push https://${GIT_USERNAME}:${encodedPassword}@github.com/${GIT_USERNAME}/DevOpsUpskill-FinalProject-Infra.git HEAD:main"
-                }
-              }
-            }
-          }
         }
     }
 }
