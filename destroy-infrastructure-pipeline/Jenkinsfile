@@ -1,41 +1,73 @@
 #!/usr/bin/env groovy
-
 def user_choice = ""
 pipeline {
     agent any
     stages {
     //Infrastructure destroying
-        stage('Destroy the EKS cluster? if Yes the clster will be destroyed') {
-            steps {
-                script {
-                    user_choice = input message: 'Are you sure you want to execute this stage?', ok: 'Proceed', parameters: [choice(choices: 'No\nYes', description: 'Be careful with this step!!!', name: 'user_choice')]
+        stage('Destroy the EKS cluster? if Yes the cluster will be destroyed') {
+          steps {
+            script {
+              user_choice = input message: 'Are you sure you want to execute this stage?', ok: 'Proceed', parameters: [choice(choices: 'No\nYes', description: 'Be careful with this step!!!', name: 'user_choice')]
+            }
+          }
+          post {
+            always {
+              script {
+                def status
+                def message
+                if (user_choice == 'Yes') {
+                  status = 'warning'
+                  message = "Destroy the EKS cluster - Warning: EKS cluster will be destroyed!"
+                } else {
+                  status = 'good'
+                  message = "Destroy the EKS cluster - SUCCESS: User has opted not to destroy EKS cluster."
                 }
+                slackSend color: status, message: message
+              }
             }
+          }
         }
+
         stage('Destroying EKS cluster') {
-            when {
-                expression { user_choice == 'Yes' }
+          when {
+            expression { user_choice == 'Yes' }
+          }
+          steps {
+            echo 'EKS cluster destroying...'
+            dir("terraform-eks-infra") {
+              sh "kubectl delete -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml"
+              sh "kubectl delete namespace argocd"
+              sh "terraform destroy --auto-approve"
             }
-            steps {
-                echo 'EKS cluster destroyng...'
-                dir("terraform-eks-infra") {
-                        sh "kubectl delete -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml"
-                        sh "kubectl delete namespace argocd"
-                        sh "terraform destroy --auto-approve"
-                    }
+          }
+          post {
+            success {
+              slackSend color: 'good', message: "Destroying EKS cluster - SUCCESS: EKS cluster has been destroyed."
             }
+            failure {
+              slackSend color: 'danger', message: "Destroying EKS cluster - FAILURE: There was an issue while destroying EKS cluster!"
+            }
+          }
         }
         stage('Update GIT to clean the terraform status files in the repo after destroy') {
           steps {
             script {
               catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                 withCredentials([usernamePassword(credentialsId: 'github-credentials', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-                    def encodedPassword = URLEncoder.encode("$GIT_PASSWORD",'UTF-8')
-                    sh "git add terraform-eks-infra/"
-                    sh "git commit -m 'Triggered Build: ${env.BUILD_NUMBER}'"
-                    sh "git push https://${GIT_USERNAME}:${encodedPassword}@github.com/${GIT_USERNAME}/DevOpsUpskill-FinalProject-Infra.git HEAD:main"
+                  def encodedPassword = URLEncoder.encode("$GIT_PASSWORD",'UTF-8')
+                  sh "git add terraform-eks-infra/"
+                  sh "git commit -m 'Triggered Build: ${env.BUILD_NUMBER}'"
+                  sh "git push https://${GIT_USERNAME}:${encodedPassword}@github.com/${GIT_USERNAME}/DevOpsUpskill-FinalProject-Infra.git HEAD:main"
                 }
               }
+            }
+          }
+          post {
+            success {
+              slackSend color: 'good', message: "Update GIT to clean the terraform status files in the repo after destroy - SUCCESS: Terraform status files have been successfully cleaned up in Git repository!"
+            }
+            failure {
+              slackSend color: 'danger', message: "Update GIT to clean the terraform status files in the repo after destroy - FAILURE: There was an issue while cleaning up Terraform status files in Git repository!"
             }
           }
         }
