@@ -57,6 +57,7 @@ pipeline {
                             sh "git add terraform-eks-infra/"
                             sh "git commit -m 'Triggered Build: ${env.BUILD_NUMBER}'"
                             def gitOutput = sh(script: "git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${GIT_USERNAME}/DevOpsUpskill-FinalProject-Infra.git HEAD:main", returnStdout: true).trim()
+                            echo gitOutput
                             if (gitOutput.contains("nothing to commit, working tree clean")) {
                                 currentBuild.result = "SUCCESS"
                             }
