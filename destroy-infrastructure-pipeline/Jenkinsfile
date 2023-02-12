@@ -38,8 +38,8 @@ pipeline {
             steps {
                 echo 'EKS cluster destroying...'
                 dir("../terraform-eks-infra") {
-                    sh "kubectl delete -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml"
-                    sh "kubectl delete namespace argocd"
+                    // sh "kubectl delete -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml"
+                    // sh "kubectl delete namespace argocd"
                     sh "terraform destroy --auto-approve"
                 }
             }
