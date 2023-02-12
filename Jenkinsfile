@@ -29,20 +29,6 @@ pipeline {
             }
         }
         stage('Update GIT to update terraform status files in the repo') {
-          steps {
-            script {
-              catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                withCredentials([usernamePassword(credentialsId: 'github-credentials', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-                    def encodedPassword = URLEncoder.encode("$GIT_PASSWORD",'UTF-8')
-                    sh "git add terraform-eks-infra/"
-                    sh "git commit -m 'Triggered Build: ${env.BUILD_NUMBER}'"
-                    sh "git push https://${GIT_USERNAME}:${encodedPassword}@github.com/${GIT_USERNAME}/DevOpsUpskill-FinalProject-Infra.git HEAD:main"
-                }
-              }
-            }
-          }
-        }
-        stage('Update GIT to update terraform status files in the repo') {
             steps {
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
@@ -53,19 +39,6 @@ pipeline {
                             sh "git push https://${GIT_USERNAME}:${encodedPassword}@github.com/${GIT_USERNAME}/DevOpsUpskill-FinalProject-Infra.git HEAD:main"
                             slackSend color: 'good', message: "Update GIT to update terraform status files in the repo - SUCCESS: Git repository has been successfully updated!"
                         }
-                    }
-                }
-            }
-        }
-        stage("Install ArgoCD") {
-            steps {
-                script {
-                    try {
-                        sh "kubectl get namespace argocd"
-                    } catch (Exception e) {
-                        sh "kubectl create namespace argocd"
-                        sh "kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml"
-                        sh "kubectl patch svc argocd-server -n argocd -p '{\"spec\": {\"type\": \"LoadBalancer\"}}'"
                     }
                 }
             }
@@ -103,20 +76,6 @@ pipeline {
                     }
                 }
             }
-        }
-        stage('Update GIT to clean the terraform status files in the repo after destroy') {
-          steps {
-            script {
-              catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                withCredentials([usernamePassword(credentialsId: 'github-credentials', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-                    def encodedPassword = URLEncoder.encode("$GIT_PASSWORD",'UTF-8')
-                    sh "git add terraform-eks-infra/"
-                    sh "git commit -m 'Triggered Build: ${env.BUILD_NUMBER}'"
-                    sh "git push https://${GIT_USERNAME}:${encodedPassword}@github.com/${GIT_USERNAME}/DevOpsUpskill-FinalProject-Infra.git HEAD:main"
-                }
-              }
-            }
-          }
         }
         stage('Update GIT to clean the terraform status files in the repo after destroy') {
             steps {
