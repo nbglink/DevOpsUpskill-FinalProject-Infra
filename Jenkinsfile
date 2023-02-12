@@ -88,4 +88,17 @@ pipeline {
             }
         }
     }
+    post {
+        always {
+            script {
+                def buildStatus = currentBuild.result == 'SUCCESS' ? 'SUCCESS' : 'FAILURE'
+                slackSend color: buildStatus == 'SUCCESS' ? 'good' : 'danger', message: "Build ${buildStatus}: ${currentBuild.fullDisplayName} (${env.BUILD_NUMBER})"
+            }
+        }
+        aborted {
+            script {
+                slackSend color: 'warning', message: "Build ABORTED: ${currentBuild.fullDisplayName} (${env.BUILD_NUMBER})"
+            }
+        }
+    }
 }
