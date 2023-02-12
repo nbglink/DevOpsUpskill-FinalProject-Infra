@@ -54,6 +54,9 @@ pipeline {
         }
         
         stage('Update GIT to clean the terraform status files in the repo after destroy') {
+            when {
+                expression { user_choice != 'No' }
+            }
             steps {
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
@@ -64,6 +67,14 @@ pipeline {
                             sh "git push https://${GIT_USERNAME}:${encodedPassword}@github.com/${GIT_USERNAME}/DevOpsUpskill-FinalProject-Infra.git HEAD:main"
                         }
                     }
+                }
+            }
+            post {
+                success {
+                    slackSend color: 'good', message: "Update GIT to clean the terraform status files in the repo after destroy - SUCCESS: Terraform status files have been successfully cleaned up in Git repository!"
+                }
+                failure {
+                    slackSend color: 'danger', message: "Update GIT to clean the terraform status files in the repo after destroy - FAILURE: There was an issue while cleaning up Terraform status files in Git repository!"
                 }
             }
         }
