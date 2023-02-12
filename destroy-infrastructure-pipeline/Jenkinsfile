@@ -59,7 +59,6 @@ pipeline {
                             def gitOutput = sh(script: "git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${GIT_USERNAME}/DevOpsUpskill-FinalProject-Infra.git HEAD:main", returnStdout: true).trim()
                             if (gitOutput.contains("nothing to commit, working tree clean")) {
                                 currentBuild.result = "SUCCESS"
-                                error("Nothing to commit, working tree clean")
                             }
                         }
                     }
