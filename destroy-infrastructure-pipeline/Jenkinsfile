@@ -54,13 +54,10 @@ pipeline {
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                         withCredentials([usernamePassword(credentialsId: 'github-credentials', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-                            sh "git add terraform-eks-infra/"
-                            sh "git commit -m 'Triggered Build: ${env.BUILD_NUMBER}'"
-                            def gitOutput = sh(script: "git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${GIT_USERNAME}/DevOpsUpskill-FinalProject-Infra.git HEAD:main", returnStdout: true).trim()
-                            echo gitOutput
-                            if (gitOutput.contains("nothing to commit, working tree clean")) {
-                                currentBuild.result = "SUCCESS"
-                            }
+                            def encodedPassword = URLEncoder.encode("$GIT_PASSWORD",'UTF-8')
+                            sh "git add terraform-eks-infra/ || :"
+                            sh "git commit -m 'Triggered Build: ${env.BUILD_NUMBER}' || :"
+                            sh "git push https://${GIT_USERNAME}:${encodedPassword}@github.com/${GIT_USERNAME}/DevOpsUpskill-FinalProject-Infra.git HEAD:main"
                         }
                     }
                 }
@@ -74,5 +71,10 @@ pipeline {
                 }
             }
         }
+}
+}
+}
+}
+}
     }
 }
