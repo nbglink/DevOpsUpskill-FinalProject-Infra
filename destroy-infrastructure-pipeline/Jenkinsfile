@@ -50,26 +50,29 @@ pipeline {
           }
         }
         stage('Update GIT to clean the terraform status files in the repo after destroy') {
-          steps {
-            script {
-              catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                withCredentials([usernamePassword(credentialsId: 'github-credentials', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-                  def encodedPassword = URLEncoder.encode("$GIT_PASSWORD",'UTF-8')
-                  sh "git add terraform-eks-infra/"
-                  sh "git commit -m 'Triggered Build: ${env.BUILD_NUMBER}'"
-                  sh "git push https://${GIT_USERNAME}:${encodedPassword}@github.com/${GIT_USERNAME}/DevOpsUpskill-FinalProject-Infra.git HEAD:main"
+            steps {
+                script {
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        withCredentials([usernamePassword(credentialsId: 'github-credentials', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
+                            sh "git add terraform-eks-infra/"
+                            sh "git commit -m 'Triggered Build: ${env.BUILD_NUMBER}'"
+                            def gitOutput = sh(script: "git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${GIT_USERNAME}/DevOpsUpskill-FinalProject-Infra.git HEAD:main", returnStdout: true).trim()
+                            if (gitOutput.contains("nothing to commit, working tree clean")) {
+                                currentBuild.result = "SUCCESS"
+                                error("Nothing to commit, working tree clean")
+                            }
+                        }
+                    }
                 }
-              }
             }
-          }
-          post {
-            success {
-              slackSend color: 'good', message: "Update GIT to clean the terraform status files in the repo after destroy - SUCCESS: Terraform status files have been successfully cleaned up in Git repository!"
+            post {
+                success {
+                    slackSend color: 'good', message: "Update GIT to clean the terraform status files in the repo after destroy - SUCCESS: Terraform status files have been successfully cleaned up in Git repository!"
+                }
+                failure {
+                    slackSend color: 'danger', message: "Update GIT to clean the terraform status files in the repo after destroy - FAILURE: There was an issue while cleaning up Terraform status files in Git repository!"
+                }
             }
-            failure {
-              slackSend color: 'danger', message: "Update GIT to clean the terraform status files in the repo after destroy - FAILURE: There was an issue while cleaning up Terraform status files in Git repository!"
-            }
-          }
         }
     }
 }
