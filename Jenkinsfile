@@ -7,7 +7,7 @@ pipeline {
         stage('Provision an EKS Cluster') {
             steps {
                 script {
-                    dir("terraform-eks-infra") {
+                    dir("./terraform-eks-infra") {
                         echo 'EKS Cluster provisioning...'
                         sh "terraform init"
                         try {
