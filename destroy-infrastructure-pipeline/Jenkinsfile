@@ -1,8 +1,10 @@
+#!/usr/bin/env groovy
+
 def user_choice = ""
 
 pipeline {
     agent any
-    
+
     stages {
         //Infrastructure destroying
         stage('Destroy the EKS cluster? if Yes the cluster will be destroyed') {
@@ -52,9 +54,6 @@ pipeline {
         }
         
         stage('Update GIT to clean the terraform status files in the repo after destroy') {
-            when {
-                expression { user_choice != 'No' }
-            }
             steps {
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
@@ -67,13 +66,19 @@ pipeline {
                     }
                 }
             }
-            post {
-                success {
-                    slackSend color: 'good', message: "Update GIT to clean the terraform status files in the repo after destroy - SUCCESS: Terraform status files have been successfully cleaned up in Git repository!"
-                }
-                failure {
-                    slackSend color: 'danger', message: "Update GIT to clean the terraform status files in the repo after destroy - FAILURE: There was an issue while cleaning up Terraform status files in Git repository!"
-                }
+        }
+    }
+
+    post {
+        always {
+            script {
+                def buildStatus = currentBuild.result == 'SUCCESS' ? 'SUCCESS' : 'FAILURE'
+                slackSend color: buildStatus == 'SUCCESS' ? 'good' : 'danger', message: "Build ${buildStatus}: ${currentBuild.fullDisplayName} (${env.BUILD_NUMBER})"
+            }
+        }
+        aborted {
+            script {
+                slackSend color: 'warning', message: "Build ABORTED: ${currentBuild.fullDisplayName} (${env.BUILD_NUMBER})"
             }
         }
     }
